@@ -3,84 +3,68 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Cyber Castle - Town Archers</title>
+    <title>Cyber Castle - Ultimate Evolution</title>
+    <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore-compat.js"></script>
+    
     <style>
         * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
-        body { 
-            background: #111; color: #fff; font-family: 'Arial', sans-serif; 
-            margin: 0; padding: 0; overflow: hidden; height: 100vh; width: 100vw;
-        }
-
-        #game-canvas { 
-            position: absolute; top: 0; left: 0; width: 100%; height: 100%;
-            background: linear-gradient(#1a1a1a, #2c3e50); 
-            border-bottom: 25px solid #3e2723;
-            overflow: hidden;
-        }
-
-        /* STATUS */
-        #status-bar {
-            position: absolute; top: 0; left: 0; width: 100%;
-            background: rgba(0,0,0,0.9); padding: 8px 20px;
-            display: flex; justify-content: flex-start; gap: 30px;
-            z-index: 110; border-bottom: 1px solid #444;
-            font-size: 14px; color: #f1c40f; font-weight: bold;
-        }
-
-        /* UPGRADES DIREITA */
-        #upgrade-row {
-            position: absolute; top: 45px; right: 15px;
-            display: flex; gap: 10px;
-            z-index: 100;
-        }
-
-        .btn-up {
-            background: #34495e; border: 2px solid #2c3e50; border-radius: 4px;
-            width: 110px; height: 75px; display: flex; flex-direction: column;
-            align-items: center; justify-content: center; cursor: pointer;
-            box-shadow: 0 4px 0 #1a252f; transition: 0.1s;
-        }
-        .btn-up:active { transform: translateY(2px); box-shadow: 0 2px 0 #1a252f; }
-        .btn-up:disabled { opacity: 0.5; filter: grayscale(1); }
+        body { background: #111; color: #fff; font-family: 'Arial', sans-serif; margin: 0; padding: 0; overflow: hidden; height: 100vh; }
+        #game-canvas { position: absolute; top: 0; left: 0; width: 100%; height: 100%; background: linear-gradient(#1a1a1a, #2c3e50); border-bottom: 25px solid #3e2723; overflow: hidden; }
         
-        .btn-up .label { font-size: 9px; color: #ecf0f1; font-weight: bold; text-transform: uppercase; }
-        .btn-up .price { font-size: 12px; color: #2ecc71; font-weight: bold; }
-
-        /* CASTELO E PLATAFORMA DE ARQUEIROS */
-        #castle { 
-            position: absolute; left: 0; bottom: 0; 
-            width: 120px; height: 50%; 
-            background: #5d4037; border-right: 6px solid #3e2723; 
-            z-index: 10;
-        }
-
-        #archer-platform {
-            position: absolute;
-            top: -30px; left: 0; width: 100%; height: 35px;
-            background: #4e342e; border: 2px solid #212121;
-            display: flex; justify-content: space-around; align-items: center;
-            padding: 0 5px;
-        }
-
-        .town-archer { font-size: 18px; animation: breathe 2s infinite; }
-
-        #main-hero { 
-            position: absolute; bottom: 55%; left: 30px; 
-            font-size: 40px; z-index: 20; animation: breathe 2.5s infinite; 
-        }
+        #status-bar { position: absolute; top: 0; left: 0; width: 100%; background: rgba(0,0,0,0.9); padding: 8px 20px; display: flex; gap: 30px; z-index: 110; border-bottom: 1px solid #444; font-size: 14px; color: #f1c40f; transition: 0.3s; font-weight: bold; }
         
-        @keyframes breathe { 0%, 100% { transform: translateY(0); } 50% { transform: translateY(-5px); } }
-        
-        .enemy { position: absolute; bottom: 0; font-size: 40px; z-index: 5; }
-        .arrow { position: absolute; width: 18px; height: 3px; background: #f1c40f; border-radius: 2px; z-index: 15; }
+        #upgrade-row { position: absolute; top: 45px; right: 10px; display: flex; gap: 8px; z-index: 100; flex-wrap: wrap; justify-content: flex-end; width: 250px; transition: 0.3s; }
+        .btn-up { background: #34495e; border: 2px solid #2c3e50; border-radius: 4px; width: 110px; height: 60px; color: white; cursor: pointer; font-size: 11px; display: flex; flex-direction: column; align-items: center; justify-content: center; box-shadow: 0 3px 0 #1a252f; }
 
-        /* HP BAR */
-        #hp-container { position: absolute; top: -50px; left: 0; width: 120px; height: 10px; background: #000; border: 1px solid #fff; }
+        #castle { position: absolute; left: 0; bottom: 55px; width: 120px; height: 50%; background: #5d4037; border-right: 6px solid #3e2723; z-index: 10; }
+        #archer-platform { position: absolute; top: -45px; left: 0; width: 100%; height: 50px; display: flex; justify-content: space-around; align-items: flex-end; padding-bottom: 5px; }
+        
+        .stickman { position: relative; width: 22px; height: 35px; animation: breathe 2s infinite; }
+        .stickman::before { content: ''; position: absolute; top: 0; left: 50%; width: 9px; height: 9px; background: #fff; border-radius: 50%; transform: translateX(-50%); border: 1px solid #000; z-index: 2; }
+        .stickman::after { content: ''; position: absolute; top: 9px; left: 50%; width: 2px; height: 12px; background: #fff; transform: translateX(-50%); z-index: 2; }
+        .aura { position: absolute; top: -5px; left: -5px; width: 32px; height: 42px; border-radius: 50%; filter: blur(8px); opacity: 0.6; z-index: 1; transition: 0.5s; }
+        
+        .arm { position: absolute; top: 11px; left: 50%; width: 10px; height: 2px; background: #fff; transform-origin: left; transform: rotate(-20deg); z-index: 2; }
+        .bow { position: absolute; top: 3px; right: -5px; width: 7px; height: 16px; border-right: 2px solid #8d6e63; border-radius: 50%; z-index: 2; }
+
+        .enemy { position: absolute; bottom: 55px; font-size: 35px; z-index: 5; transition: filter 0.3s; }
+        .arrow { position: absolute; width: 14px; height: 2px; background: #f1c40f; border-radius: 2px; z-index: 15; }
+        
+        #hp-container { position: absolute; top: -75px; left: 0; width: 120px; height: 10px; background: #000; border: 1px solid #fff; }
         #hp-fill { height: 100%; background: #2ecc71; width: 100%; transition: 0.2s; }
 
+        #btn-battle { position: absolute; bottom: 70px; right: 20px; width: 75px; height: 75px; background: #e74c3c; color: white; border: 4px solid #c0392b; border-radius: 50%; z-index: 150; font-weight: bold; box-shadow: 0 5px 0 #922b21; }
+        #bottom-nav { position: absolute; bottom: 0; left: 0; width: 100%; height: 55px; background: #2c3e50; border-top: 3px solid #1a252f; display: flex; justify-content: space-around; align-items: center; z-index: 160; transition: 0.3s; }
+        .nav-item { display: flex; flex-direction: column; align-items: center; color: #bdc3c7; font-size: 10px; cursor: pointer; }
+
+        #rank-modal { position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); width: 85%; background: #2c3e50; border: 4px solid #f1c40f; border-radius: 12px; padding: 15px; z-index: 300; display: none; text-align: center; }
+        
+        .hidden-ui { opacity: 0; pointer-events: none; transform: translateY(-20px); }
+        .hidden-nav { transform: translateY(60px) !important; }
+        @keyframes breathe { 0%, 100% { transform: translateY(0); } 50% { transform: translateY(-2px); } }
+        
+        @keyframes fadeInRank {
+            from { opacity: 0; transform: translateY(5px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
     </style>
 </head>
-<body>
+<body onload="initApp()">
+
+    <div id="rank-modal">
+        <h3 style="margin:0; color:#f1c40f;">🏆 TOP GLOBAL</h3>
+        <div id="rank-list" style="margin: 10px 0; background: rgba(0,0,0,0.3); padding: 10px; border-radius: 5px; text-align: left; min-height: 100px;"></div>
+        <input type="text" id="player-name" oninput="saveNickLocal()" placeholder="Digite seu Nick" maxlength="12" style="width:100%; padding:10px; margin-bottom: 10px; border-radius:5px; border:none; text-align:center;">
+        <button onclick="toggleRank()" style="background:#e74c3c; color:white; border:none; padding:10px; border-radius:5px; width:100%;">VOLTAR</button>
+    </div>
+
+    <div id="overlay" style="position: absolute; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.9); display: flex; flex-direction: column; align-items: center; justify-content: center; z-index: 200;">
+        <h2 style="color:#f1c40f">CYBER CASTLE</h2>
+        <button style="padding: 15px 40px; font-size: 20px; background: #2ecc71; color: white; border: none; border-radius: 8px; font-weight: bold;" onclick="startGame()">JOGAR</button>
+    </div>
+
+    <button id="btn-battle" style="display:none;" onclick="startBattle()">BATTLE</button>
 
     <div id="game-canvas">
         <div id="status-bar">
@@ -89,134 +73,232 @@
         </div>
 
         <div id="upgrade-row">
-            <button class="btn-up" id="up-atk" onclick="upgradeAtk()">
-                <span class="label">Arqueiros Town</span>
-                <span class="price">💰 <b id="cost-atk">15</b></span>
-            </button>
-            <button class="btn-up" id="up-castle" onclick="upgradeCastle()">
-                <span class="label">Castelo</span>
-                <span class="price">💰 <b id="cost-castle">20</b></span>
-            </button>
+            <button class="btn-up" onclick="upgradeArcherCount()">Arqueiros<br>💰 <b id="cost-count">15</b></button>
+            <button class="btn-up" onclick="upgradeArcherDmg()">Dano<br>💰 <b id="cost-dmg">25</b></button>
+            <button class="btn-up" onclick="upgradeCastle()">Vida<br>💰 <b id="cost-castle">20</b></button>
         </div>
-
-        <div id="main-hero">🛡️</div>
 
         <div id="castle">
             <div id="hp-container"><div id="hp-fill"></div></div>
-            <div id="archer-platform" id="archers-list">
-                <div class="town-archer">🏹</div>
-            </div>
+            <div id="archer-platform"></div>
+        </div>
+
+        <div id="bottom-nav">
+            <div class="nav-item">🏠<br>HOME</div>
+            <div class="nav-item" onclick="toggleRank()">🏆<br>RANK</div>
+            <div class="nav-item">🛡️<br>GUILD</div>
+            <div class="nav-item">⚙️<br>CONFIG</div>
         </div>
     </div>
 
     <script>
-        let gold = 0; let wave = 1; let castleLvl = 1;
-        let archerCount = 1;
-        let castleHp = 100; let maxHp = 100;
-        let atkDmg = 10; let costAtk = 15; let costCastle = 20;
-        let enemies = [];
+        const firebaseConfig = {
+            apiKey: "AIzaSyDqsA81UTs35j2HpJRnuQKM1d9qHiFgxv4",
+            authDomain: "cybercastle-94cc1.firebaseapp.com",
+            projectId: "cybercastle-94cc1",
+            storageBucket: "cybercastle-94cc1.firebasestorage.app",
+            messagingSenderId: "863855144595",
+            appId: "1:863855144595:web:babda935b80b97fe21e766"
+        };
+        firebase.initializeApp(firebaseConfig);
+        const db = firebase.firestore();
 
-        const canvas = document.getElementById('game-canvas');
-        const platform = document.getElementById('archer-platform');
+        let gold = 0, wave = 1, inBattle = false;
+        let archerCount = 1, archerDmgLvl = 1, maxHp = 100, castleHp = 100;
+        let enemies = [], fightTimer, moveTimer, rankTimer;
 
-        function spawnEnemy() {
-            const en = document.createElement('div');
-            en.className = 'enemy';
-            en.style.right = '-60px';
-            en.innerHTML = "🧟";
-            en.hp = 30 + (wave * 20);
-            canvas.appendChild(en);
-            enemies.push(en);
+        function initApp() {
+            loadLocalData();
+            updateUI();
+            updateArchersVisual();
         }
 
-        setInterval(() => {
+        function saveNickLocal() {
+            const nick = document.getElementById('player-name').value;
+            localStorage.setItem('cyberCastle_nick', nick);
+        }
+
+        function updateArchersVisual() {
+            const platform = document.getElementById('archer-platform');
+            platform.innerHTML = '';
+            let color = "transparent";
+            if (wave >= 45) color = "red";
+            else if (wave >= 25) color = "cyan";
+            else if (wave >= 10) color = "yellow";
+
+            for(let i=0; i<archerCount; i++) {
+                const div = document.createElement('div');
+                div.className = 'stickman';
+                div.innerHTML = `<div class="aura" style="background:${color}"></div><div class="arm"></div><div class="bow"></div>`;
+                platform.appendChild(div);
+            }
+        }
+
+        function startBattle() {
+            if (inBattle) return;
+            inBattle = true;
+            document.getElementById('btn-battle').style.display = 'none';
+            toggleUI(false);
+            castleHp = maxHp;
+            spawnWave(3 + Math.floor(wave/3));
+            fightTimer = setInterval(attackLoop, 1200);
+            moveTimer = setInterval(moveEnemies, 50);
+            updateUI();
+        }
+
+        function spawnWave(amount) {
+            let enemyColor = "none";
+            if (wave >= 45) enemyColor = "hue-rotate(300deg) brightness(1.2)";
+            else if (wave >= 25) enemyColor = "hue-rotate(180deg) brightness(1.2)";
+            else if (wave >= 10) enemyColor = "hue-rotate(60deg) brightness(1.5)";
+
+            for(let i=0; i < amount; i++) {
+                setTimeout(() => {
+                    if(!inBattle) return;
+                    const en = document.createElement('div');
+                    en.className = 'enemy'; en.style.right = '-60px'; en.innerHTML = "🧟";
+                    en.style.filter = enemyColor;
+                    en.hp = 30 + (wave * 40);
+                    document.getElementById('game-canvas').appendChild(en); 
+                    enemies.push(en);
+                }, i * 1500);
+            }
+        }
+
+        function moveEnemies() {
+            if (!inBattle) return;
             enemies.forEach(en => {
                 let right = parseInt(en.style.right);
-                if ((canvas.offsetWidth - right) > 160) {
-                    en.style.right = (right + 4) + 'px';
+                if ((window.innerWidth - right) > 160) {
+                    en.style.right = (right + 3.2) + 'px';
                 } else {
-                    castleHp -= 1.5;
+                    castleHp -= (10 + (wave/2));
                     updateUI();
+                    if (castleHp <= 0) endBattle(false);
                 }
             });
-            if (castleHp <= 0) { alert("O Castelo Caiu!"); location.reload(); }
-        }, 50);
+        }
 
-        // Ataque dos Arqueiros (Efeito de rajada)
-        setInterval(() => {
-            if (enemies.length > 0) {
-                let target = enemies[0];
-                
-                // Cada arqueiro na plataforma atira uma flecha
-                for(let i=0; i < archerCount; i++) {
-                    setTimeout(() => {
-                        shoot(target, i);
-                        target.hp -= (atkDmg / archerCount); 
-                        if (target.hp <= 0 && target.parentNode) {
-                            target.remove();
-                            enemies = enemies.filter(e => e !== target);
-                            gold += 20 + wave;
-                            updateUI();
-                        }
-                    }, i * 150); // Delay entre cada flecha para parecer rajada
-                }
-            } else { spawnEnemy(); wave++; updateUI(); }
-        }, 1200);
+        function attackLoop() {
+            if (!inBattle || enemies.length === 0) return;
+            let target = enemies[0];
+            let dmg = 25 + (archerDmgLvl * 15);
+            
+            let goldReward = 20;
+            if (wave >= 45) goldReward = 120;
+            else if (wave >= 25) goldReward = 55;
+            else if (wave >= 10) goldReward = 25;
 
-        function shoot(target, archerIdx) {
+            for(let i=0; i<archerCount; i++) {
+                setTimeout(() => {
+                    if(!target || !target.parentNode) return;
+                    shoot(target);
+                    target.hp -= dmg; 
+                    if (target.hp <= 0 && target.parentNode) {
+                        target.remove();
+                        enemies = enemies.filter(e => e !== target);
+                        gold += goldReward;
+                        updateUI();
+                        if (enemies.length === 0) endBattle(true);
+                    }
+                }, i * 200);
+            }
+        }
+
+        function shoot(target) {
             const arrow = document.createElement('div');
-            arrow.className = 'arrow';
-            arrow.style.left = '90px';
-            arrow.style.bottom = (50 + (archerIdx * 2)) + '%';
-            canvas.appendChild(arrow);
-            
-            let targetX = canvas.offsetWidth - parseInt(target.style.right) - 40;
+            arrow.className = 'arrow'; arrow.style.left = '100px'; arrow.style.bottom = '55%';
+            document.getElementById('game-canvas').appendChild(arrow);
+            let targetX = window.innerWidth - parseInt(target.style.right) - 40;
             arrow.style.transition = "all 0.4s ease-out";
-            
-            setTimeout(() => { 
-                arrow.style.left = targetX + "px"; 
-                arrow.style.bottom = "20px"; 
-            }, 20);
-            setTimeout(() => arrow.remove(), 420);
+            setTimeout(() => { arrow.style.left = targetX + "px"; arrow.style.bottom = "80px"; }, 20);
+            setTimeout(() => arrow.remove(), 400);
         }
 
-        function upgradeCastle() {
-            if (gold >= costCastle) {
-                gold -= costCastle; castleLvl++; maxHp += 120; castleHp = maxHp;
-                costCastle = Math.floor(costCastle * 1.7);
-                if (castleLvl >= 5) document.getElementById('castle').style.background = "#757575";
-                updateUI();
+        function endBattle(win) {
+            inBattle = false;
+            clearInterval(fightTimer); clearInterval(moveTimer);
+            toggleUI(true);
+            enemies.forEach(e => e.remove());
+            enemies = [];
+            if (win) { 
+                wave++; 
+                saveLocalData(); 
+                sendScore(); 
+                updateArchersVisual(); 
+            }
+            document.getElementById('btn-battle').style.display = 'block';
+            updateUI();
+        }
+
+        function upgradeArcherCount() { let cost = 15 * Math.pow(4, archerCount-1); if (gold >= cost && archerCount < 5) { gold -= cost; archerCount++; updateArchersVisual(); saveLocalData(); updateUI(); } }
+        function upgradeArcherDmg() { let cost = 25 + (archerDmgLvl * 20); if (gold >= cost) { gold -= cost; archerDmgLvl++; saveLocalData(); updateUI(); } }
+        function upgradeCastle() { let cost = 20 + (maxHp/10); if (gold >= cost) { gold -= cost; maxHp += 200; castleHp = maxHp; saveLocalData(); updateUI(); } }
+        
+        async function sendScore() { 
+            const name = document.getElementById('player-name').value.trim();
+            if(!name) return;
+            try { 
+                await db.collection("ranking").doc(name).set({ name, wave }, { merge: true }); 
+            } catch (e) { console.log("Erro Firebase"); }
+        }
+        
+        async function loadOnlineRank() { 
+            const listDiv = document.getElementById('rank-list'); 
+            try { 
+                const snapshot = await db.collection("ranking").orderBy("wave", "desc").limit(5).get(); 
+                let html = ""; 
+                snapshot.forEach(doc => { 
+                    html += `<div style="display:flex; justify-content:space-between; padding:8px 0; border-bottom:1px solid #444; animation: fadeInRank 0.3s;">
+                                <span>${doc.data().name}</span> 
+                                <b style="color:#f1c40f;">W${doc.data().wave}</b>
+                             </div>`; 
+                }); 
+                listDiv.innerHTML = html || "Vazio"; 
+                console.log("Rank Atualizado!");
+            } catch (e) { listDiv.innerHTML = "Erro."; } 
+        }
+
+        function toggleRank() { 
+            const modal = document.getElementById('rank-modal'); 
+            const isOpen = modal.style.display === 'block';
+            if(!isOpen) {
+                modal.style.display = 'block';
+                // ATUALIZA IMEDIATAMENTE AO ABRIR
+                loadOnlineRank();
+                // INICIA O CRONÔMETRO DE 1 MINUTO
+                clearInterval(rankTimer);
+                rankTimer = setInterval(loadOnlineRank, 60000);
+            } else {
+                modal.style.display = 'none';
+                // PARA O TIMER AO FECHAR
+                clearInterval(rankTimer);
             }
         }
 
-        function upgradeAtk() {
-            if (gold >= costAtk) {
-                gold -= costAtk;
-                atkDmg += 15;
-                costAtk = Math.floor(costAtk * 1.8);
-                
-                // Adiciona um novo arqueiro visual a cada 2 upgrades (até 4)
-                if (archerCount < 4) {
-                    archerCount++;
-                    const newArcher = document.createElement('div');
-                    newArcher.className = 'town-archer';
-                    newArcher.innerHTML = "🏹";
-                    platform.appendChild(newArcher);
-                }
-                updateUI();
-            }
+        function toggleUI(show) { document.getElementById('status-bar').classList.toggle('hidden-ui', !show); document.getElementById('upgrade-row').classList.toggle('hidden-ui', !show); document.getElementById('bottom-nav').classList.toggle('hidden-nav', !show); }
+        function startGame() { document.getElementById('overlay').style.display = 'none'; document.getElementById('btn-battle').style.display = 'block'; }
+        
+        function saveLocalData() { 
+            localStorage.setItem('cyberCastle_save', JSON.stringify({ gold, wave, archerCount, archerDmgLvl, maxHp })); 
         }
-
+        
+        function loadLocalData() { 
+            const saved = JSON.parse(localStorage.getItem('cyberCastle_save') || '{}'); 
+            const nick = localStorage.getItem('cyberCastle_nick') || "";
+            document.getElementById('player-name').value = nick;
+            gold = saved.gold || 0; wave = saved.wave || 1; archerCount = saved.archerCount || 1; 
+            archerDmgLvl = saved.archerDmgLvl || 1; maxHp = saved.maxHp || 100; 
+        }
+        
         function updateUI() {
-            document.getElementById('gold').innerText = gold;
+            document.getElementById('gold').innerText = Math.floor(gold);
             document.getElementById('wave').innerText = wave;
-            document.getElementById('cost-atk').innerText = costAtk;
-            document.getElementById('cost-castle').innerText = costCastle;
-            document.getElementById('up-atk').disabled = gold < costAtk;
-            document.getElementById('up-castle').disabled = gold < costCastle;
             document.getElementById('hp-fill').style.width = (castleHp / maxHp * 100) + "%";
+            document.getElementById('cost-count').innerText = 15 * Math.pow(4, archerCount-1);
+            document.getElementById('cost-dmg').innerText = 25 + (archerDmgLvl * 20);
+            document.getElementById('cost-castle').innerText = 20 + (maxHp/10);
         }
-        updateUI();
     </script>
 </body>
     </html>
