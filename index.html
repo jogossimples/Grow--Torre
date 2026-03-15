@@ -3,41 +3,104 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Cyber Castle Defense</title>
+    <title>Cyber Castle - Herói Arqueiro</title>
     <style>
-        body { background: #222; color: #fff; font-family: sans-serif; text-align: center; margin: 0; overflow: hidden; }
-        #game-container { position: relative; width: 100vw; height: 60vh; background: #333; border-bottom: 5px solid #555; overflow: hidden; }
+        body { background: #1a1a1a; color: #fff; font-family: 'Courier New', Courier, monospace; text-align: center; margin: 0; overflow: hidden; }
+        
+        #game-container { 
+            position: relative; 
+            width: 100vw; 
+            height: 60vh; 
+            background: linear-gradient(#1a1a1a, #2c3e50); 
+            border-bottom: 8px solid #3e2723; 
+            overflow: hidden; 
+        }
         
         /* Castelo */
-        #castle { position: absolute; left: 0; bottom: 0; width: 80px; height: 150px; background: #666; border: 3px solid #444; }
-        #hp-bar { width: 100px; height: 10px; background: red; position: absolute; top: -20px; left: -10px; border: 1px solid #000; }
-        #hp-inner { width: 100%; height: 100%; background: #0f0; transition: 0.3s; }
+        #castle { 
+            position: absolute; 
+            left: 0; 
+            bottom: 0; 
+            width: 100px; 
+            height: 180px; 
+            background: #424242; 
+            border-right: 4px solid #212121; 
+            z-index: 10;
+        }
+
+        /* O Herói */
+        #hero {
+            position: absolute;
+            bottom: 185px; /* Em cima do castelo */
+            left: 30px;
+            font-size: 30px;
+            z-index: 20;
+            animation: breathe 2s ease-in-out infinite;
+        }
+
+        @keyframes breathe {
+            0%, 100% { transform: translateY(0); }
+            50% { transform: translateY(-5px); }
+        }
 
         /* Inimigo */
-        .enemy { position: absolute; width: 30px; height: 30px; background: red; bottom: 0; }
+        .enemy { 
+            position: absolute; 
+            width: 40px; 
+            height: 40px; 
+            bottom: 0; 
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 20px;
+            z-index: 5;
+        }
 
-        /* Interface */
-        .ui { padding: 20px; }
-        .btn-upgrade { background: #f1c40f; border: none; padding: 10px; font-weight: bold; cursor: pointer; border-radius: 5px; }
-        .btn-upgrade:disabled { background: #7f8c8d; }
+        /* Flecha */
+        .arrow {
+            position: absolute;
+            width: 15px;
+            height: 3px;
+            background: #f1c40f;
+            border-radius: 2px;
+            z-index: 15;
+        }
+
+        /* Barra de Vida */
+        #hp-bar { width: 120px; height: 12px; background: #c0392b; position: absolute; top: -25px; left: -10px; border: 2px solid #000; }
+        #hp-inner { width: 100%; height: 100%; background: #2ecc71; transition: 0.2s; }
+
+        /* UI */
+        .ui { padding: 15px; background: #000; border-bottom: 2px solid #00ff41; }
+        .stats { display: flex; justify-content: space-around; font-size: 18px; color: #00ff41; }
+        .btn-upgrade { 
+            background: #00ff41; color: #000; border: none; padding: 15px; 
+            font-weight: bold; cursor: pointer; border-radius: 5px; margin-top: 10px;
+            width: 80%; max-width: 300px;
+        }
+        .btn-upgrade:disabled { background: #555; color: #888; }
     </style>
 </head>
 <body>
 
     <div class="ui">
-        <h2>Ouro: <span id="gold">0</span> | Onda: <span id="wave">1</span></h2>
-    </div>
-
-    <div id="game-container">
-        <div id="castle">
-            <div id="hp-bar"><div id="hp-inner"></div></div>
-            <div style="font-size: 10px; margin-top: 50px;">CASTELO</div>
+        <div class="stats">
+            <span>💰 Ouro: <b id="gold">0</b></span>
+            <span>🌊 Onda: <b id="wave">1</b></span>
         </div>
     </div>
 
-    <div class="ui">
-        <button class="btn-upgrade" id="up-atk" onclick="upgradeAtk()">Upgrade Arqueiro (Custo: 15)</button>
-        <p>HP do Castelo: <span id="castle-hp">100</span></p>
+    <div id="game-container">
+        <div id="hero">🏹<br>👤</div>
+
+        <div id="castle">
+            <div id="hp-bar"><div id="hp-inner"></div></div>
+        </div>
+    </div>
+
+    <div class="ui" style="border-top: 2px solid #00ff41; border-bottom: none;">
+        <p>Vida do Castelo: <span id="castle-hp">100</span> / 100</p>
+        <button class="btn-upgrade" id="up-atk" onclick="upgradeAtk()">Melhorar Arqueiro (Custo: 15)</button>
     </div>
 
     <script>
@@ -46,70 +109,89 @@
         let castleHp = 100;
         let maxHp = 100;
         let atkDmg = 10;
-        let atkSpeed = 1000; // 1 segundo
+        let atkSpeed = 1200; 
         let enemies = [];
         let upgradeCost = 15;
 
         const container = document.getElementById('game-container');
 
-        // Função para criar inimigos
         function spawnEnemy() {
             const enemy = document.createElement('div');
             enemy.className = 'enemy';
-            enemy.style.right = '0px';
-            enemy.hp = 20 + (wave * 5);
+            enemy.style.right = '-50px';
+            enemy.innerHTML = "🧟"; // Emoji de Monstro
+            enemy.hp = 20 + (wave * 8);
             container.appendChild(enemy);
             enemies.push(enemy);
         }
 
-        // Lógica do Jogo (Loop)
+        // Sistema de Movimento e Dano dos Inimigos
         setInterval(() => {
             enemies.forEach((en, index) => {
                 let currentRight = parseInt(en.style.right);
-                
-                // Se o inimigo não chegou no castelo, ele anda
-                if (window.innerWidth - currentRight > 100) {
-                    en.style.right = (currentRight + 2) + 'px';
+                let containerWidth = container.offsetWidth;
+
+                // Se o inimigo não tocou o castelo (castelo tem 100px)
+                if (containerWidth - currentRight > 130) {
+                    en.style.right = (currentRight + 3) + 'px';
                 } else {
-                    // Inimigo bate no castelo
-                    castleHp -= 0.5;
+                    castleHp -= 0.3;
                     updateUI();
                 }
             });
 
             if (castleHp <= 0) {
-                alert("Game Over! O castelo caiu.");
+                alert("O Castelo foi destruído!");
                 location.reload();
             }
         }, 50);
 
-        // Arqueiro atacando automaticamente
+        // Sistema de Ataque do Herói (Disparo de Flecha)
         setInterval(() => {
             if (enemies.length > 0) {
                 let target = enemies[0];
-                target.hp -= atkDmg;
-                target.style.background = 'white'; // Efeito de dano
-                setTimeout(() => target.style.background = 'red', 100);
+                createArrow(target);
 
-                if (target.hp <= 0) {
-                    target.remove();
-                    enemies.shift();
-                    gold += 5 + wave;
-                    updateUI();
-                }
+                setTimeout(() => {
+                    target.hp -= atkDmg;
+                    if (target.hp <= 0) {
+                        target.remove();
+                        enemies.shift();
+                        gold += 10 + wave;
+                        updateUI();
+                    }
+                }, 400); // Tempo da flecha viajar
             } else {
-                // Se não tem inimigo, começa nova onda
                 spawnEnemy();
                 wave++;
                 updateUI();
             }
         }, atkSpeed);
 
+        function createArrow(target) {
+            const arrow = document.createElement('div');
+            arrow.className = 'arrow';
+            arrow.style.left = '80px';
+            arrow.style.bottom = '195px';
+            container.appendChild(arrow);
+
+            // Animação simples da flecha indo ao alvo
+            let targetX = container.offsetWidth - parseInt(target.style.right) - 40;
+            arrow.style.transition = "all 0.4s linear";
+            
+            setTimeout(() => {
+                arrow.style.left = targetX + "px";
+                arrow.style.bottom = "20px";
+            }, 10);
+
+            setTimeout(() => arrow.remove(), 410);
+        }
+
         function upgradeAtk() {
             if (gold >= upgradeCost) {
                 gold -= upgradeCost;
-                atkDmg += 5;
-                upgradeCost = Math.floor(upgradeCost * 1.6);
+                atkDmg += 7;
+                upgradeCost = Math.floor(upgradeCost * 1.7);
                 updateUI();
             }
         }
@@ -118,7 +200,7 @@
             document.getElementById('gold').innerText = gold;
             document.getElementById('wave').innerText = wave;
             document.getElementById('castle-hp').innerText = Math.floor(castleHp);
-            document.getElementById('up-atk').innerText = `Upgrade Arqueiro (Custo: ${upgradeCost})`;
+            document.getElementById('up-atk').innerText = `Melhorar Arqueiro (Custo: ${upgradeCost})`;
             document.getElementById('up-atk').disabled = gold < upgradeCost;
             
             let hpPercent = (castleHp / maxHp) * 100;
@@ -128,4 +210,4 @@
         updateUI();
     </script>
 </body>
-  </html>
+                                 </html>
