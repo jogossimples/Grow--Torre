@@ -1,14 +1,131 @@
 <!DOCTYPE html>
-<html>
+<html lang="pt-br">
 <head>
-  <title>Grow Tower</title>
-  <style>
-    /* Estilos do jogo */
-  </style>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Cyber Castle Defense</title>
+    <style>
+        body { background: #222; color: #fff; font-family: sans-serif; text-align: center; margin: 0; overflow: hidden; }
+        #game-container { position: relative; width: 100vw; height: 60vh; background: #333; border-bottom: 5px solid #555; overflow: hidden; }
+        
+        /* Castelo */
+        #castle { position: absolute; left: 0; bottom: 0; width: 80px; height: 150px; background: #666; border: 3px solid #444; }
+        #hp-bar { width: 100px; height: 10px; background: red; position: absolute; top: -20px; left: -10px; border: 1px solid #000; }
+        #hp-inner { width: 100%; height: 100%; background: #0f0; transition: 0.3s; }
+
+        /* Inimigo */
+        .enemy { position: absolute; width: 30px; height: 30px; background: red; bottom: 0; }
+
+        /* Interface */
+        .ui { padding: 20px; }
+        .btn-upgrade { background: #f1c40f; border: none; padding: 10px; font-weight: bold; cursor: pointer; border-radius: 5px; }
+        .btn-upgrade:disabled { background: #7f8c8d; }
+    </style>
 </head>
 <body>
-  <canvas id="jogo"></canvas>
-  <script src="phaser.min.js"></script>
-  <script src="script.js"></script>
+
+    <div class="ui">
+        <h2>Ouro: <span id="gold">0</span> | Onda: <span id="wave">1</span></h2>
+    </div>
+
+    <div id="game-container">
+        <div id="castle">
+            <div id="hp-bar"><div id="hp-inner"></div></div>
+            <div style="font-size: 10px; margin-top: 50px;">CASTELO</div>
+        </div>
+    </div>
+
+    <div class="ui">
+        <button class="btn-upgrade" id="up-atk" onclick="upgradeAtk()">Upgrade Arqueiro (Custo: 15)</button>
+        <p>HP do Castelo: <span id="castle-hp">100</span></p>
+    </div>
+
+    <script>
+        let gold = 0;
+        let wave = 1;
+        let castleHp = 100;
+        let maxHp = 100;
+        let atkDmg = 10;
+        let atkSpeed = 1000; // 1 segundo
+        let enemies = [];
+        let upgradeCost = 15;
+
+        const container = document.getElementById('game-container');
+
+        // Função para criar inimigos
+        function spawnEnemy() {
+            const enemy = document.createElement('div');
+            enemy.className = 'enemy';
+            enemy.style.right = '0px';
+            enemy.hp = 20 + (wave * 5);
+            container.appendChild(enemy);
+            enemies.push(enemy);
+        }
+
+        // Lógica do Jogo (Loop)
+        setInterval(() => {
+            enemies.forEach((en, index) => {
+                let currentRight = parseInt(en.style.right);
+                
+                // Se o inimigo não chegou no castelo, ele anda
+                if (window.innerWidth - currentRight > 100) {
+                    en.style.right = (currentRight + 2) + 'px';
+                } else {
+                    // Inimigo bate no castelo
+                    castleHp -= 0.5;
+                    updateUI();
+                }
+            });
+
+            if (castleHp <= 0) {
+                alert("Game Over! O castelo caiu.");
+                location.reload();
+            }
+        }, 50);
+
+        // Arqueiro atacando automaticamente
+        setInterval(() => {
+            if (enemies.length > 0) {
+                let target = enemies[0];
+                target.hp -= atkDmg;
+                target.style.background = 'white'; // Efeito de dano
+                setTimeout(() => target.style.background = 'red', 100);
+
+                if (target.hp <= 0) {
+                    target.remove();
+                    enemies.shift();
+                    gold += 5 + wave;
+                    updateUI();
+                }
+            } else {
+                // Se não tem inimigo, começa nova onda
+                spawnEnemy();
+                wave++;
+                updateUI();
+            }
+        }, atkSpeed);
+
+        function upgradeAtk() {
+            if (gold >= upgradeCost) {
+                gold -= upgradeCost;
+                atkDmg += 5;
+                upgradeCost = Math.floor(upgradeCost * 1.6);
+                updateUI();
+            }
+        }
+
+        function updateUI() {
+            document.getElementById('gold').innerText = gold;
+            document.getElementById('wave').innerText = wave;
+            document.getElementById('castle-hp').innerText = Math.floor(castleHp);
+            document.getElementById('up-atk').innerText = `Upgrade Arqueiro (Custo: ${upgradeCost})`;
+            document.getElementById('up-atk').disabled = gold < upgradeCost;
+            
+            let hpPercent = (castleHp / maxHp) * 100;
+            document.getElementById('hp-inner').style.width = hpPercent + "%";
+        }
+
+        updateUI();
+    </script>
 </body>
-</html>
+  </html>
